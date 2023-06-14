@@ -27,7 +27,7 @@ typedef struct {
 
 static
 void regexp(sqlite3_context *ctx, int argc, sqlite3_value **argv) {
-    const char *pattern_str, *subject_str;
+    const unsigned char *pattern_str, *subject_str;
     int pattern_len, subject_len;
     pcre2_code *pattern_code;
 
@@ -37,14 +37,14 @@ void regexp(sqlite3_context *ctx, int argc, sqlite3_value **argv) {
         return;
     }
 
-    pattern_str = (const char *) sqlite3_value_text(argv[0]);
+    pattern_str = sqlite3_value_text(argv[0]);
     if (!pattern_str) {
         sqlite3_result_error(ctx, "no pattern", -1);
         return;
     }
     pattern_len = sqlite3_value_bytes(argv[0]);
 
-    subject_str = (const char *) sqlite3_value_text(argv[1]);
+    subject_str = sqlite3_value_text(argv[1]);
     if (!subject_str) {
         sqlite3_result_error(ctx, "no subject", -1);
         return;
@@ -139,7 +139,9 @@ void regexp(sqlite3_context *ctx, int argc, sqlite3_value **argv) {
         } else { // (rc < 0 and the code is not one of the above)
             PCRE2_UCHAR error_buffer[256];
             pcre2_get_error_message(rc, error_buffer, sizeof(error_buffer));
-            sqlite3_result_error(ctx, error_buffer, -1);
+            char *e2 = sqlite3_mprintf("%s", error_buffer);
+            sqlite3_result_error(ctx, e2, -1);
+            sqlite3_free(e2);
             return;
         }
         pcre2_match_data_free(match_data);
